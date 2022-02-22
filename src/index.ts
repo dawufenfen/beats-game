@@ -2,6 +2,18 @@ import "phaser";
 
 class GameScene extends Phaser.Scene {
 
+  /* 加载资源 */
+  preload() {
+    this.load.image("journey", "assets/journey.jpg");
+  }
+
+  create() {
+    /* 背景 */
+    this.add.image(0, 0, "journey").setDisplaySize(1200, 600).setOrigin(0, 0);
+  }
+
+  update() {
+  }
 }
 
 /* 游戏设置 */
