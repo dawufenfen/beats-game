@@ -1,11 +1,20 @@
 import "phaser";
 
 class GameScene extends Phaser.Scene {
+  /* 人与星星碰撞 */
+  collectStar = (player, star) => {
+    /* Stops and disables this Game Object's Body. */
+    star.disableBody(true, true);
+    /* 计分 */
+    score += 10;
+    scoreText.setText("Score: " + score);
+  };
 
   /* 加载资源 */
   preload() {
     this.load.image("journey", "assets/journey.jpg");
     this.load.image("ground", "assets/ground.jpg");
+    this.load.image("star", "assets/star.png");
 
     /* 根据这里的单位宽高来计算每一帧显示的图片的位置 */
     this.load.spritesheet("dude", "assets/dude.png", {
@@ -26,6 +35,24 @@ class GameScene extends Phaser.Scene {
     platforms.create(300, 400, "ground").setDisplaySize(200, 20).refreshBody();
     platforms.create(800, 200, "ground").setDisplaySize(200, 20).refreshBody();
     platforms.create(600, 590, "ground").setDisplaySize(1200, 20).refreshBody();
+
+    /* 放上12个星星，每隔100放一个 */
+    stars = this.physics.add.group({
+      key: "star", //图案
+      repeat: 11, //重复次数
+      setXY: { x: 12, y: 0, stepX: 100 }, // 初始位置xy，以及每步增加的x
+    });
+    /* 星星的弹跳属性 */
+    stars.children.iterate(function (child) {
+      /*  @ts-ignore-next-line */
+      child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+    });
+
+    /* 分数文案 */
+    scoreText = this.add.text(16, 16, "score: 0", {
+      fontSize: "32px",
+      color: "#000",
+    });
 
     /* 小人 */
     /* 生成一个sprite，并设置位置 */
@@ -58,6 +85,13 @@ class GameScene extends Phaser.Scene {
       repeat: -1,
     });
 
+    /* 创建碰撞器，控制碰撞。*/
+    /*  人-平台 */
+    this.physics.add.collider(player, platforms);
+    /* 星星-平台 */
+    this.physics.add.collider(stars, platforms);
+    /* 人-星星（自定义监听事件）  */
+    this.physics.add.overlap(player, stars, this.collectStar, null);
   }
 
   update() {
@@ -92,3 +126,11 @@ window.onload = () => {
 var player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
 /* 碰撞的平台 */
 var platforms: Phaser.Physics.Arcade.StaticGroup;
+/* 光标 */
+var cursors: Phaser.Types.Input.Keyboard.CursorKeys;
+/* 星星 */
+var stars: Phaser.Physics.Arcade.Group;
+/* 分数的值 */
+var score = 0;
+/* 分数文案 */
+var scoreText: Phaser.GameObjects.Text;
