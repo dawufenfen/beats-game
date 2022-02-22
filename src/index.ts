@@ -8,6 +8,44 @@ class GameScene extends Phaser.Scene {
     /* 计分 */
     score += 10;
     scoreText.setText("Score: " + score);
+
+    /**
+     * 当场上没有星星了，即全部收集完成时
+     * 重新放出一轮星星
+     * 放出一颗炸弹
+     */
+    if (stars.countActive(true) === 0) {
+      stars.children.iterate(function (child) {
+        /*  @ts-ignore-next-line */
+        child.enableBody(true, child.x, 0, true, true);
+      });
+
+      var x =
+        player.x < 400
+          ? Phaser.Math.Between(400, 1200)
+          : Phaser.Math.Between(0, 400);
+
+      const bomb = bombs.create(x, 16, "bomb");
+      /* 反弹值 */
+      bomb.setBounce(1);
+      /* 世界边界碰撞 */
+      bomb.setCollideWorldBounds(true);
+      /* 设置初始速度 */
+      bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+      /* 设置不受重力影响 */
+      bomb.allowGravity = false;
+    }
+  };
+
+  /* 人与炸弹碰撞 */
+  hitBomb = (player, bomb) => {
+    this.physics.pause();
+
+    player.setTint(0xff0000);
+
+    player.anims.play("turn");
+
+    gameOver = true;
   };
 
   /* 加载资源 */
@@ -15,6 +53,7 @@ class GameScene extends Phaser.Scene {
     this.load.image("journey", "assets/journey.jpg");
     this.load.image("ground", "assets/ground.jpg");
     this.load.image("star", "assets/star.png");
+    this.load.image("bomb", "assets/bomb.png");
 
     /* 根据这里的单位宽高来计算每一帧显示的图片的位置 */
     this.load.spritesheet("dude", "assets/dude.png", {
@@ -54,6 +93,9 @@ class GameScene extends Phaser.Scene {
       color: "#000",
     });
 
+    /* 炸弹 */
+    bombs = this.physics.add.group();
+
     /* 小人 */
     /* 生成一个sprite，并设置位置 */
     player = this.physics.add.sprite(700, 300, "dude");
@@ -92,20 +134,27 @@ class GameScene extends Phaser.Scene {
     this.physics.add.collider(stars, platforms);
     /* 人-星星（自定义监听事件）  */
     this.physics.add.overlap(player, stars, this.collectStar, null);
+    /* 炸弹-平台  */
+    this.physics.add.collider(bombs, platforms);
+    /* 人-炸弹（自定义监听事件）  */
+    this.physics.add.collider(player, bombs, this.hitBomb, null);
 
     /* 获取键盘管理器对象*/
     cursors = this.input.keyboard.createCursorKeys();
   }
 
   update() {
+    if (gameOver) {
+      return;
+    }
     /* 向左被按下 */
     if (cursors.left.isDown) {
-      player.setVelocityX(-160);
+      player.setVelocityX(-200);
 
       player.anims.play("left", true);
     } else if (cursors.right.isDown) {
       /* 向右被按下 */
-      player.setVelocityX(160);
+      player.setVelocityX(200);
 
       player.anims.play("right", true);
     } else {
@@ -116,7 +165,7 @@ class GameScene extends Phaser.Scene {
     }
     /* 向上被按下，并且下边缘在与平台接触时，设置向上的速度 */
     if (cursors.up.isDown && player.body.touching.down) {
-      player.setVelocityY(-620);
+      player.setVelocityY(-630);
     }
   }
 }
@@ -157,3 +206,7 @@ var stars: Phaser.Physics.Arcade.Group;
 var score = 0;
 /* 分数文案 */
 var scoreText: Phaser.GameObjects.Text;
+/* 炸弹 */
+var bombs: Phaser.Physics.Arcade.Group;
+/* 游戏结束 */
+var gameOver = false;
