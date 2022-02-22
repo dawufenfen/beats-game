@@ -92,9 +92,32 @@ class GameScene extends Phaser.Scene {
     this.physics.add.collider(stars, platforms);
     /* 人-星星（自定义监听事件）  */
     this.physics.add.overlap(player, stars, this.collectStar, null);
+
+    /* 获取键盘管理器对象*/
+    cursors = this.input.keyboard.createCursorKeys();
   }
 
   update() {
+    /* 向左被按下 */
+    if (cursors.left.isDown) {
+      player.setVelocityX(-160);
+
+      player.anims.play("left", true);
+    } else if (cursors.right.isDown) {
+      /* 向右被按下 */
+      player.setVelocityX(160);
+
+      player.anims.play("right", true);
+    } else {
+      /* 都没被按下，置为初始值 */
+      player.setVelocityX(0);
+
+      player.anims.play("turn");
+    }
+    /* 向上被按下，并且下边缘在与平台接触时，设置向上的速度 */
+    if (cursors.up.isDown && player.body.touching.down) {
+      player.setVelocityY(-620);
+    }
   }
 }
 
